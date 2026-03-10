@@ -17,9 +17,25 @@ if (SaveDefaults || RestoreDefaults) {
 var Headers = GetInputConstructorValue("Headers", loader);
 
 try{
-    var code = loader.GetAdditionalData() + _.template($("#curlImpersonate_SetHeader_code").html())({
-		Headers: Headers["updated"]
-    });
+   var TemplateCache = {};
+   function loadTemplateSync(url) {
+	  if (!TemplateCache[url]) {
+	    var xhr = new XMLHttpRequest();
+	    xhr.open('GET', url, false);
+	    xhr.send(null);
+	    if (xhr.status >= 200 && xhr.status < 300) {
+	      TemplateCache[url] = _.template(xhr.responseText);
+	    } else {
+	      throw new Error('Cannot load template ' + url + ' (' + xhr.status + ')');
+	    }
+	  }
+	  return TemplateCache[url];
+	}
+
+	var code = loader.GetAdditionalData()
+	  + loadTemplateSync('http://raw.githubusercontent.com/Int64x86/Documents/refs/heads/main/curlImpersonate_SetHeader_code.js')({
+	      Headers: Headers["updated"]
+	});
     code = Normalize(code, 0);
     BrowserAutomationStudio_Append("", BrowserAutomationStudio_SaveControls() + code, action, DisableIfAdd);
 }catch(e){}
